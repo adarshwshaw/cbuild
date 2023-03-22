@@ -1,3 +1,4 @@
+
 #ifndef AD_INCLUDE_CBUILD_H_
 #define AD_INCLUDE_CBUILD_H_
 #include <stdio.h>
@@ -23,6 +24,7 @@ typedef struct {
     int count;
 } cstr_array;
 
+// desc: Execute shell command and prints output to stdout
 #define CMD(...) \
 do{\
     cstr_array res = cstr_array_init(__VA_ARGS__,NULL);\
@@ -32,8 +34,10 @@ do{\
     cstr_array_free(res);\
 }while(0)
 
+// Moves file from one location to another
 #define MOVE(SRC,DST) CMD("MOVE",SRC,DST)
 
+// rebuild the it self if there is a change in source
 #define GO_REBUILD_URSELF() \
 do{\
     const char* cfile = __FILE__;\
@@ -68,22 +72,22 @@ ADCB_API int cstr_array_join(const char* delimiter,cstr_array arr,char* out,size
 //
 // dirent
 // 
-// Functionality needed:
-// 1. List directory
-// 2. Get File info
-// 3. Move files
-// 4. delete files
-// 5. create directory
 
+//get fileinfo from directory
 ADCB_API _Bool adcb_getFile(const char* filepath, ADCB_FILEINFO* fi);
+
+// create a directory
 ADCB_API _Bool adcb_createDir(const char* dirpath);
+
+// delete file or directory(recursive)
 ADCB_API _Bool adcb_deletefile(char* filepath);
 
 
 #endif //AD_INCLUDE_CBUILD_H_
 
 #ifdef CBUILD_IMPLEMENTATION
- 
+
+// runs shell command
 ADCB_API int __cmd(const char* cmd){
 
     char buffer[512];
@@ -100,6 +104,7 @@ ADCB_API int __cmd(const char* cmd){
     return closeReturnedVal;
 }
 
+// create a string array from variadic arguments
 ADCB_API cstr_array cstr_array_init(cstr first, ...){
     cstr_array res={0};
     va_list va;
@@ -121,12 +126,14 @@ ADCB_API cstr_array cstr_array_init(cstr first, ...){
     return res;
 }
 
+// free the cstr_array
 ADCB_API void cstr_array_free(cstr_array arr){
     for (int i=0;i<arr.count;i++)
         free((void*)(arr.elem[i]));
     free(arr.elem);
 }
 
+// join list of string with delimiter
 ADCB_API int cstr_array_join(const char* delimiter,cstr_array arr,char* out,size_t max_len){
     int res_len = arr.count+1;
     for (int i=0;i<arr.count;i++){
@@ -153,6 +160,8 @@ ADCB_API int cstr_array_join(const char* delimiter,cstr_array arr,char* out,size
 // 
 // dirent
 // 
+
+// compares file last write time
 ADCB_API int is_f1_modified_after_f2(const char* f1, const char* f2){
     ADCB_FILEINFO fi1,fi2;
     if(adcb_getFile(f1,&fi1)==0){
@@ -166,6 +175,8 @@ ADCB_API int is_f1_modified_after_f2(const char* f1, const char* f2){
     int res = CompareFileTime(&(fi1.fileinfo.ftLastWriteTime),&(fi2.fileinfo.ftLastWriteTime))==1?1:0;
     return res;
 }
+
+// get fileinfo
 ADCB_API _Bool adcb_getFile(const char* filepath, ADCB_FILEINFO* fi){
     if(FindFirstFile(filepath,&(fi->fileinfo))==INVALID_HANDLE_VALUE){
         printf("ERROR: could not find file\n");
@@ -175,10 +186,13 @@ ADCB_API _Bool adcb_getFile(const char* filepath, ADCB_FILEINFO* fi){
     GetFullPathName(fi->fileinfo.cFileName,MAX_PATH,fi->basePath,NULL);
     return 1;
 }
+// create empty directory
 ADCB_API _Bool adcb_createDir(const char* dirpath){
     // doesnot work recursively;
     return CreateDirectory(dirpath,0);
 }
+
+// delete file or directory
 ADCB_API _Bool adcb_deletefile(char* filepath){
     // ADCB_fixPath((char*)filepath);
     ADCB_FILEINFO fi;
