@@ -48,6 +48,7 @@ do{\
     cstr_array res = cstr_array_init(__VA_ARGS__,NULL);\
     char jres[4096]={0};\
     cstr_array_join(" ",res,jres,sizeof(jres));\
+    printf("RUNNING %s\n",jres);\
     __cmd(jres);\
     cstr_array_free(res);\
 }while(0)
@@ -143,6 +144,11 @@ ADCB_API cstr_array cstr_array_init(cstr first, ...){
     va_end(va);
     return res;
 }
+ADCB_API void cstr_array_add(cstr_array* arr, const char* str){
+    arr->count++;
+    arr->elem = realloc(arr->elem,arr->count*sizeof(cstr));
+    arr->elem[arr->count-1]=_strdup(str);
+}
 
 // free the cstr_array
 ADCB_API void cstr_array_free(cstr_array arr){
@@ -194,6 +200,22 @@ ADCB_API int is_f1_modified_after_f2(const char* f1, const char* f2){
     return res;
 }
 
+ADCB_API _Bool adcb_getFiles(const char* dirpath, cstr_array* arr){
+    ADCB_FILEINFO fi;
+    HANDLE pid = FindFirstFile(dirpath,&(fi.fileinfo));
+    if(pid==INVALID_HANDLE_VALUE){
+        printf("ERROR: could not locate directory or file\n");
+        return 0;
+    }
+
+    do{
+        if (!strcmp(".",fi.fileinfo.cFileName) || !strcmp("..",fi.fileinfo.cFileName))
+            continue;
+        GetFullPathName(fi.fileinfo.cFileName,MAX_PATH,fi.basePath,NULL);
+        cstr_array_add(arr,fi.basePath);
+    }while(FindNextFile(pid,&(fi.fileinfo))!=0);
+    return 1;
+}
 // get fileinfo
 ADCB_API _Bool adcb_getFile(const char* filepath, ADCB_FILEINFO* fi){
     if(FindFirstFile(filepath,&(fi->fileinfo))==INVALID_HANDLE_VALUE){
@@ -222,8 +244,7 @@ ADCB_API _Bool adcb_deletefile(char* filepath){
     if (fi.fileinfo.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY){
         CMD("rmdir","/S","/Q",fi.basePath);
         return 1;
-    }
-        
+    }    
     else
         return DeleteFile(filepath);
 }
