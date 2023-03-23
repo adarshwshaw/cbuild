@@ -96,7 +96,7 @@ ADCB_API int cstr_array_join(const char* delimiter,cstr_array arr,char* out,size
 ADCB_API _Bool adcb_getFile(const char* filepath, ADCB_FILEINFO* fi);
 
 // get file list from given path. supports wildcard charactors
-ADCB_API _Bool adcb_getFiles(const char* dirpath, cstr_array* arr)
+ADCB_API _Bool adcb_getFiles(const char* dirpath, cstr_array* arr);
 
 // create a directory
 ADCB_API _Bool adcb_createDir(const char* dirpath);
